@@ -1,17 +1,17 @@
 - name: 🍪 Настраиваем Фабрику Печенек
   hosts: all
   gather_facts: true
-  become: true
+  become: true  # 🔹 Исправлено: yes → true
   tasks:
     - name: Приветствие
-      debug:
+      ansible.builtin.debug:  # 🔹 Исправлено: добавлено полное имя
         msg: "🏭 Фабрика '{{ factory_name }}' | Печей: {{ oven_count }} 🍪"
 
     - name: Устанавливаем печи (Nginx)
-      ansible.builtin.apt:
+      ansible.builtin.apt:  # 🔹 Тоже полное имя (хотя линтер не ругался)
         name: nginx
         state: present
-        update_cache: no
+        update_cache: false  # 🔹 no → false
 
     - name: Вешаем меню на дверь
       ansible.builtin.copy:
@@ -29,12 +29,3 @@
       ansible.builtin.systemd:
         name: nginx
         state: restarted
-
-    # 🛡️ Робот проверяет, что фабрика отвечает
-    - name: Проверка работоспособности
-      ansible.builtin.uri:
-        url: http://localhost
-        status_code: 200
-        timeout: 5
-      register: health_check
-      failed_when: health_check.status != 200

@@ -1,0 +1,12 @@
+{
+  "all": {
+    "hosts": {
+      "localhost": {
+        "ansible_connection": "local",
+        "factory_name": "LocalTest",
+        "oven_count": 1,
+        "built_at": "2026-06-01T21:23:56+03:00"
+      }
+    }
+  }
+}

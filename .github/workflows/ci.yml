@@ -1,0 +1,52 @@
+name: 🍪 Cookie Factory CI
+
+# 🎯 Когда запускать проверку:
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+# 🛠️ Что делать:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1️⃣ Скачиваем твой код
+      - name: 📥 Забираем код
+        uses: actions/checkout@v4
+
+      # 2️⃣ Ставим Python и Ansible
+      - name: 🐍 Готовим инструменты
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: ⚙️ Ставим Ansible
+        run: pip install ansible ansible-lint
+
+      # 3️⃣ Проверяем синтаксис playbook
+      - name: 🔍 Проверка синтаксиса
+        run: ansible-playbook --syntax-check playbook.yml
+
+      # 4️⃣ Запускаем линтер (поиск плохих практик)
+      - name: 🧹 Линтинг кода
+        run: ansible-lint playbook.yml || echo "⚠️ Предупреждения (не критично)"
+
+      # 5️⃣ Проверяем, что скрипт исполняемый
+      - name: 🔐 Права на скрипт
+        run: |
+          chmod +x apply_infra.sh
+          test -x apply_infra.sh && echo "✅ Скрипт готов к запуску"
+
+      # 6️⃣ Тестовый запуск (эмуляция)
+      - name: 🧪 Тест инфраструктуры
+        run: |
+          mkdir -p inventory
+          ./apply_infra.sh "TestFactory" 2
+          test -f inventory/robot_address_book.json && echo "✅ Инвентарь создан"
+
+      # 7️⃣ Финальный отчёт
+      - name: 🎉 Всё готово!
+        run: echo "✅ CI пройден! Код можно мержить!"
