@@ -1,3 +1,4 @@
+[![CI](https://github.com/alekseibaranovib2023-alt/portfolio-ansible/actions/workflows/ci.yml/badge.svg)](https://github.com/alekseibaranovib2023-alt/portfolio-ansible/actions)
 [✅ Статус: Готов к продакшену]
 # 🍪 Cookie Factory: Terraform + Ansible Pipeline
 
