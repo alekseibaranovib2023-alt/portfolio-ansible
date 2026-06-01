@@ -1,0 +1,40 @@
+- name: 🍪 Настраиваем Фабрику Печенек
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Приветствие
+      debug:
+        msg: "🏭 Фабрика '{{ factory_name }}' | Печей: {{ oven_count }} 🍪"
+
+    - name: Устанавливаем печи (Nginx)
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: no
+
+    - name: Вешаем меню на дверь
+      ansible.builtin.copy:
+        content: |
+          <h1>🍪 Фабрика {{ factory_name }}</h1>
+          <p>🔥 Печей: {{ oven_count }}</p>
+          <p>⏰ Построена: {{ built_at }}</p>
+          <p>✅ Всё работает!</p>
+        dest: /var/www/html/index.html
+        mode: '0644'
+      notify: Перезапустить сервер
+
+  handlers:
+    - name: Перезапустить сервер
+      ansible.builtin.systemd:
+        name: nginx
+        state: restarted
+
+    # 🛡️ Робот проверяет, что фабрика отвечает
+    - name: Проверка работоспособности
+      ansible.builtin.uri:
+        url: http://localhost
+        status_code: 200
+        timeout: 5
+      register: health_check
+      failed_when: health_check.status != 200
