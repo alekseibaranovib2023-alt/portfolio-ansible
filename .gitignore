@@ -1,7 +1,9 @@
 # Ansible
 *.retry
+ansible.log
 .vault_password
 vault_pass.txt
+.ansible/
 
 # Python
 __pycache__/
@@ -36,12 +38,6 @@ Thumbs.db
 # Secrets
 secrets.yml
 *.vault.yml
-.vault_password
-.vault_password
-
-# Ansible
-*.retry
-ansible.log
 
 # Molecule
 .molecule/
@@ -49,3 +45,9 @@ ansible.log
 # Local testing
 .vagrant/
 *.box
+
+# Installed roles (устанавливаются через ansible-galaxy)
+roles/geerlingguy.*/
+
+# Collections
+collections/
