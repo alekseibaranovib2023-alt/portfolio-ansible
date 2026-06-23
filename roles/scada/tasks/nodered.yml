@@ -1,0 +1,38 @@
+---
+- name: Wait for Node-RED to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nodered_port }}"
+    method: GET
+    status_code: 200
+  register: nodered_health
+  until: nodered_health.status == 200
+  retries: 30
+  delay: 5
+
+- name: Get current Node-RED flows
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nodered_port }}/flows"
+    method: GET
+    status_code: 200
+  register: current_flows
+
+- name: Display current flows count
+  ansible.builtin.debug:
+    msg: "Current flows: {{ current_flows.json | length }} nodes"
+
+- name: Deploy MQTT monitoring flow
+  ansible.builtin.uri:
+    url: "http://localhost:{{ nodered_port }}/flows"
+    method: POST
+    body_format: json
+    body: "{{ lookup('file', 'templates/nodered-flow.json') | from_json }}"
+    status_code:
+      - 200
+      - 400
+  register: flow_result
+  changed_when: flow_result.status == 200
+  ignore_errors: true
+
+- name: Display flow deployment result
+  ansible.builtin.debug:
+    msg: "Flow deployment status: {{ flow_result.status | default('skipped') }}"

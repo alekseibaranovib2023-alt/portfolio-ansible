@@ -1,0 +1,64 @@
+---
+- name: Wait for Grafana to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ grafana_port }}/api/health"
+    method: GET
+    status_code: 200
+  register: grafana_health
+  until: grafana_health.status == 200
+  retries: 30
+  delay: 5
+
+- name: Create InfluxDB datasource in Grafana
+  ansible.builtin.uri:
+    url: "http://localhost:{{ grafana_port }}/api/datasources"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      name: "InfluxDB"
+      type: "influxdb"
+      access: "proxy"
+      url: "http://influxdb:8086"
+      jsonData:
+        version: "Flux"
+        organization: "{{ influxdb_org }}"
+        defaultBucket: "{{ influxdb_bucket }}"
+        tlsSkipVerify: true
+      secureJsonData:
+        token: "{{ influxdb_token }}"
+    status_code:
+      - 200
+      - 409
+  register: datasource_influx
+  changed_when: datasource_influx.status == 200
+
+- name: Create Prometheus datasource in Grafana
+  ansible.builtin.uri:
+    url: "http://localhost:{{ grafana_port }}/api/datasources"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      name: "Prometheus"
+      type: "prometheus"
+      access: "proxy"
+      url: "http://prometheus:9090"
+      isDefault: true
+      jsonData:
+        timeInterval: "15s"
+    status_code:
+      - 200
+      - 409
+  register: datasource_prometheus
+  changed_when: datasource_prometheus.status == 200
+
+- name: Display datasource creation results
+  ansible.builtin.debug:
+    msg:
+      - "InfluxDB datasource: {{ 'created' if datasource_influx.status == 200 else 'already exists' }}"
+      - "Prometheus datasource: {{ 'created' if datasource_prometheus.status == 200 else 'already exists' }}"

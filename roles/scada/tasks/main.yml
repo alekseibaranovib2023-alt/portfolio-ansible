@@ -19,6 +19,27 @@
     mode: '0644'
   notify: restart mosquitto
 
+- name: Copy Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ scada_base_dir }}/prometheus.yml"
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Copy Prometheus alert rules
+  ansible.builtin.template:
+    src: alert-rules.yml.j2
+    dest: "{{ scada_base_dir }}/alert-rules.yml"
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Copy Alertmanager config
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ scada_base_dir }}/alertmanager.yml"
+    mode: '0644'
+  notify: restart alertmanager
+
 - name: Check if Mosquitto password file exists
   ansible.builtin.stat:
     path: "{{ scada_base_dir }}/passwordfile"
@@ -52,3 +73,16 @@
 - name: Display compose result
   ansible.builtin.debug:
     var: compose_result
+
+# Автоматическая настройка сервисов
+- name: Configure Grafana datasources
+  ansible.builtin.include_tasks: grafana.yml
+  tags: [grafana, configure]
+
+- name: Configure InfluxDB
+  ansible.builtin.include_tasks: influxdb.yml
+  tags: [influxdb, configure]
+
+- name: Configure Node-RED flows
+  ansible.builtin.include_tasks: nodered.yml
+  tags: [nodered, configure]

@@ -1,0 +1,56 @@
+groups:
+  - name: scada_alerts
+    rules:
+      - alert: ContainerDown
+        expr: time() - container_last_seen{name=~".+"} > 60
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{% raw %}Container {{ $labels.name }} down{% endraw %}"
+          description: "{% raw %}Container {{ $labels.name }} has been down for more than 1 minute.{% endraw %}"
+
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_user_seconds_total{job="cadvisor"}[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{% raw %}High CPU usage on {{ $labels.name }}{% endraw %}"
+          description: "{% raw %}Container {{ $labels.name }} CPU usage is above 80% for 5 minutes.{% endraw %}"
+
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{job="cadvisor"} / container_spec_memory_limit_bytes{job="cadvisor"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{% raw %}High memory usage on {{ $labels.name }}{% endraw %}"
+          description: "{% raw %}Container {{ $labels.name }} memory usage is above 80% for 5 minutes.{% endraw %}"
+
+      - alert: HostHighCPU
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on host"
+          description: "Host CPU usage is above 80% for 5 minutes."
+
+      - alert: HostHighMemory
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on host"
+          description: "Host memory usage is above 85% for 5 minutes."
+
+      - alert: HostDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space running low"
+          description: "Disk usage is above 85% for 5 minutes."

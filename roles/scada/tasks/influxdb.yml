@@ -1,0 +1,31 @@
+---
+- name: Wait for InfluxDB to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ influxdb_port }}/ping"
+    method: GET
+    status_code: 204
+  register: influxdb_health
+  until: influxdb_health.status == 204
+  retries: 30
+  delay: 5
+
+- name: Get InfluxDB buckets
+  ansible.builtin.uri:
+    url: "http://localhost:{{ influxdb_port }}/api/v2/buckets"
+    method: GET
+    headers:
+      Authorization: "Token {{ influxdb_token }}"
+    status_code: 200
+  register: buckets_result
+
+- name: Display InfluxDB buckets
+  ansible.builtin.debug:
+    msg: "Found {{ buckets_result.json.buckets | length }} buckets: {{ buckets_result.json.buckets | map(attribute='name') | list }}"
+
+- name: Check if scada bucket exists
+  ansible.builtin.set_fact:
+    scada_bucket_exists: "{{ buckets_result.json.buckets | selectattr('name', 'equalto', influxdb_bucket) | list | length > 0 }}"
+
+- name: Display bucket status
+  ansible.builtin.debug:
+    msg: "Bucket '{{ influxdb_bucket }}' exists: {{ scada_bucket_exists }}"

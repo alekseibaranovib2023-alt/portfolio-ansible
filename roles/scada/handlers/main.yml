@@ -11,6 +11,20 @@
       - mosquitto
     state: restarted
 
+- name: restart prometheus
+  community.docker.docker_compose_v2:
+    project_src: "{{ scada_base_dir }}"
+    services:
+      - prometheus
+    state: restarted
+
+- name: restart alertmanager
+  community.docker.docker_compose_v2:
+    project_src: "{{ scada_base_dir }}"
+    services:
+      - alertmanager
+    state: restarted
+
 - name: restart grafana
   community.docker.docker_compose_v2:
     project_src: "{{ scada_base_dir }}"

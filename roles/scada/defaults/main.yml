@@ -1,12 +1,27 @@
 ---
+# Base directory
 scada_base_dir: /opt/scada
+
+# Grafana
 grafana_port: 3000
+grafana_image: "grafana/grafana:latest"
+
+# Node-RED
 nodered_port: 1880
+nodered_image: "nodered/node-red:latest"
+
+# InfluxDB
 influxdb_port: 8086
+influxdb_version: "2.7"
+influxdb_image: "influxdb:2.7"
+
+# Mosquitto
 mosquitto_port: 1883
 mosquitto_ws_port: 9001
-influxdb_version: "2.7"
-grafana_image: "grafana/grafana:latest"
-nodered_image: "nodered/node-red:latest"
 mosquitto_image: "eclipse-mosquitto:2"
-influxdb_image: "influxdb:2.7"
+
+# Prometheus (изменён порт, чтобы не конфликтовать с minikube)
+prometheus_port: 19090
+alertmanager_port: 9093
+cadvisor_port: 8080
+node_exporter_port: 9100
