@@ -1,0 +1,34 @@
+- name: Деплой Фабрики Печенек в Kubernetes
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - kubernetes.core
+  tasks:
+    - name: Применяем Deployment
+      kubernetes.core.k8s:
+        state: present
+        namespace: default  # 🔹 Добавили namespace
+        src: k8s/deployment.yml
+
+    - name: Применяем Service
+      kubernetes.core.k8s:
+        state: present
+        namespace: default  # 🔹 Добавили namespace
+        src: k8s/service.yml
+
+    - name: Ждём, пока все 3 пода будут готовы
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: default  # 🔹 Добавили namespace
+        label_selectors:
+          - app=cookie-factory
+        field_selectors:
+          - status.phase=Running
+      register: pod_info
+      until: pod_info.resources | length == 3
+      retries: 15
+      delay: 5
+
+    - name: Показываем результат
+      ansible.builtin.debug:
+        msg: "✅ Запущено подов: {{ pod_info.resources | length }} | Фабрика работает!"

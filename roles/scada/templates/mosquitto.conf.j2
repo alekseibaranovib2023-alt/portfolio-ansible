@@ -1,0 +1,14 @@
+# Mosquitto configuration with authentication
+listener {{ mosquitto_port }}
+allow_anonymous false
+password_file /mosquitto/config/passwordfile
+
+listener {{ mosquitto_ws_port }}
+protocol websockets
+allow_anonymous false
+password_file /mosquitto/config/passwordfile
+
+persistence true
+persistence_location /mosquitto/data/
+
+log_dest stdout

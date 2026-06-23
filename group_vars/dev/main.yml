@@ -1,0 +1,7 @@
+---
+environment_name: development
+debug_mode: true
+grafana_port: 3000
+nodered_port: 1880
+influxdb_port: 8086
+mosquitto_port: 1883

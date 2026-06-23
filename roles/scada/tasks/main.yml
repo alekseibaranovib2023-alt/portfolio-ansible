@@ -1,0 +1,54 @@
+---
+- name: Create SCADA directory
+  ansible.builtin.file:
+    path: "{{ scada_base_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ scada_base_dir }}/docker-compose.yml"
+    mode: '0644'
+  notify: restart scada
+
+- name: Copy Mosquitto config
+  ansible.builtin.template:
+    src: mosquitto.conf.j2
+    dest: "{{ scada_base_dir }}/mosquitto.conf"
+    mode: '0644'
+  notify: restart mosquitto
+
+- name: Check if Mosquitto password file exists
+  ansible.builtin.stat:
+    path: "{{ scada_base_dir }}/passwordfile"
+  register: passwordfile_stat
+
+- name: Create Mosquitto password file
+  ansible.builtin.shell: |
+    docker run --rm \
+      -e MQTT_USER='{{ mosquitto_user }}' \
+      -e MQTT_PASS='{{ mosquitto_password }}' \
+      -v {{ scada_base_dir }}:/mosquitto/config \
+      {{ mosquitto_image }} \
+      sh -c 'mosquitto_passwd -c -b /mosquitto/config/passwordfile "$MQTT_USER" "$MQTT_PASS"'
+  when: not passwordfile_stat.stat.exists
+  register: mosquitto_passwd_result
+  changed_when: mosquitto_passwd_result.rc == 0
+
+- name: Fix Mosquitto password file permissions
+  ansible.builtin.file:
+    path: "{{ scada_base_dir }}/passwordfile"
+    mode: '0644'
+  when: not passwordfile_stat.stat.exists
+
+- name: Ensure SCADA containers are running
+  community.docker.docker_compose_v2:
+    project_src: "{{ scada_base_dir }}"
+    state: present
+    pull: missing
+  register: compose_result
+
+- name: Display compose result
+  ansible.builtin.debug:
+    var: compose_result

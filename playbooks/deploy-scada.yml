@@ -1,0 +1,24 @@
+---
+- name: Deploy SCADA system
+  hosts: localhost
+  connection: local
+  become: true
+  
+  vars_files:
+    - ../secrets.yml
+  
+  roles:
+    - role: scada
+  
+  post_tasks:
+    - name: Display access information
+      ansible.builtin.debug:
+        msg:
+          - "SCADA system deployed successfully!"
+          - "Grafana: http://localhost:{{ grafana_port }}"
+          - "  User: {{ grafana_admin_user }}"
+          - "Node-RED: http://localhost:{{ nodered_port }}"
+          - "InfluxDB: http://localhost:{{ influxdb_port }}"
+          - "  User: {{ influxdb_admin_user }}"
+          - "Mosquitto: mqtt://localhost:{{ mosquitto_port }}"
+          - "  User: {{ mosquitto_user }}"

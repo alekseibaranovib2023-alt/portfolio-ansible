@@ -1,0 +1,19 @@
+---
+- name: restart scada
+  community.docker.docker_compose_v2:
+    project_src: "{{ scada_base_dir }}"
+    state: restarted
+
+- name: restart mosquitto
+  community.docker.docker_compose_v2:
+    project_src: "{{ scada_base_dir }}"
+    services:
+      - mosquitto
+    state: restarted
+
+- name: restart grafana
+  community.docker.docker_compose_v2:
+    project_src: "{{ scada_base_dir }}"
+    services:
+      - grafana
+    state: restarted

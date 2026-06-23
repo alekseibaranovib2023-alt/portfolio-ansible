@@ -1,0 +1,8 @@
+---
+- name: Development environment setup
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Debug message
+      ansible.builtin.debug:
+        msg: "Development environment"

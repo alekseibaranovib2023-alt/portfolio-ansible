@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: akki
+  description: SCADA system deployment role
+  company: YourCompany
+  license: MIT
+  min_ansible_version: "2.13"
+  galaxy_tags:
+    - scada
+    - docker
+    - monitoring
+  namespace: akki
+  role_name: scada
+
+dependencies: []

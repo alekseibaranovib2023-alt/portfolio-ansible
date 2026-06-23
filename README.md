@@ -1,17 +1,20 @@
-[![CI](https://github.com/alekseibaranovib2023-alt/portfolio-ansible/actions/workflows/ci.yml/badge.svg)](https://github.com/alekseibaranovib2023-alt/portfolio-ansible/actions)
-[✅ Статус: Готов к продакшену]
-# 🍪 Cookie Factory: Terraform + Ansible Pipeline
+# Portfolio Ansible Project
 
-Автоматизированное развёртывание веб-инфраструктуры по принципам IaC.
+Автоматизация инфраструктуры с использованием Ansible, Docker, Kubernetes и Terraform.
 
-## 🚀 Быстрый старт
-```bash
-./apply_infra.sh "MyFactory" 5
-ansible-playbook -i inventory/robot_address_book.json playbook.yml
-curl http://localhost
-```
+## Структура проекта
 
-## 🧠 Архитектура
-- 📐 Terraform (эмуляция) → генерирует инвентарь
-- 🤖 Ansible → настраивает Nginx, деплоит статику
-- 🔄 Идемпотентность: повторный запуск безопасен
+- `ansible.cfg` - конфигурация Ansible
+- `inventory/` - inventory файлы (dev/prod/staging)
+- `playbooks/` - playbook'и
+- `roles/` - Ansible роли
+- `group_vars/` - групповые переменные
+- `templates/` - Jinja2 шаблоны
+- `files/` - статические файлы
+- `tests/` - тесты (Molecule)
+
+## Быстрый старт
+
+1. Установка коллекций: `ansible-galaxy install -r requirements.yml`
+2. Запуск SCADA: `cd playbooks/scada && docker compose up -d`
+3. Запуск playbook: `ansible-playbook playbooks/playbook.yml`

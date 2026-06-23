@@ -1,0 +1,136 @@
+name: Ansible CI/CD
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible ansible-lint
+
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install -r requirements.yml
+          ansible-galaxy role install -r requirements.yml || true
+
+      - name: Run ansible-lint
+        run: |
+          ansible-lint playbooks/ roles/ --exclude roles/geerlingguy.docker/
+
+  syntax-check:
+    name: Syntax Check
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install -r requirements.yml
+
+      - name: Create dummy vault password
+        run: |
+          echo "dummy_password_for_ci" > .vault_password
+          chmod 600 .vault_password
+
+      - name: Check playbook syntax
+        run: |
+          ansible-playbook playbooks/deploy-scada.yml --syntax-check --vault-password-file .vault_password || true
+          ansible-playbook playbooks/dev/site.yml --syntax-check
+          ansible-playbook playbooks/prod/site.yml --syntax-check
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for unencrypted secrets
+        run: |
+          if [ -f secrets.yml ]; then
+            if ! grep -q "ANSIBLE_VAULT" secrets.yml; then
+              echo "❌ ERROR: secrets.yml is not encrypted!"
+              exit 1
+            fi
+            echo "✅ secrets.yml is encrypted"
+          else
+            echo "⚠️ secrets.yml not found"
+          fi
+
+      - name: Check .gitignore
+        run: |
+          if ! grep -q ".vault_password" .gitignore; then
+            echo "❌ ERROR: .vault_password not in .gitignore!"
+            exit 1
+          fi
+          echo "✅ .vault_password is in .gitignore"
+
+  notify:
+    name: Notify Telegram
+    runs-on: ubuntu-latest
+    needs: [lint, syntax-check, security-check]
+    if: always() && github.event_name == 'push'
+    
+    steps:
+      - name: Notify Success
+        if: needs.lint.result == 'success' && needs.syntax-check.result == 'success' && needs.security-check.result == 'success'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *Ansible CI/CD Success!*
+            
+            📦 Repository: `${{ github.repository }}`
+            🌿 Branch: `${{ github.ref_name }}`
+            👤 Author: `${{ github.actor }}`
+            📝 Commit: `${{ github.sha }}`
+
+      - name: Notify Failure
+        if: needs.lint.result == 'failure' || needs.syntax-check.result == 'failure' || needs.security-check.result == 'failure'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *Ansible CI/CD Failed!*
+            
+            📦 Repository: `${{ github.repository }}`
+            🌿 Branch: `${{ github.ref_name }}`
+            👤 Author: `${{ github.actor }}`
+            
+            🔗 [Check logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

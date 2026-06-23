@@ -1,0 +1,23 @@
+- name: Отправка уведомления в Telegram
+  hosts: localhost
+  gather_facts: true
+  vars:
+    telegram_bot_token: "8888028838:AAGmmKcfzh8ovs3kcnJ9RzoX7zQuHiwOtQo"
+    telegram_chat_id: "1111282941"
+  
+  tasks:
+    - name: Отправляем сообщение
+      ansible.builtin.uri:
+        url: "https://api.telegram.org/bot{{ telegram_bot_token }}/sendMessage"
+        method: POST
+        body_format: json
+        body:
+          chat_id: "{{ telegram_chat_id }}"
+          text: "✅ Деплой Фабрики Печенек завершён! Хост: {{ ansible_facts.hostname }}"
+        status_code: 200
+      register: telegram_result
+      
+    - name: Показываем результат
+      ansible.builtin.debug:
+        msg: "✅ Сообщение отправлено в Telegram!"
+      when: telegram_result.status == 200

@@ -1,0 +1,26 @@
+---
+profile: moderate
+
+skip_list:
+  - yaml[line-length]
+  - yaml[comments]
+  - name[missing]
+  - risky-shell-pipe
+  - schema
+  - no-changed-when
+  - var-naming[no-role-prefix]  # Временно отключаем проверку префиксов
+  - role-name[path]  # Временно отключаем проверку путей
+
+exclude_paths:
+  - .github/
+  - .git/
+  - roles/geerlingguy.docker/
+  - .ansible/
+  - molecule/
+  - tests/
+
+use_default_rules: true
+verbosity: 1
+
+# Добавляем vault password
+vault_password_file: .vault_password

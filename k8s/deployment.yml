@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cookie-factory
+spec:
+  replicas: 3  # 🚢 Капитан следит, чтобы всегда было 3 контейнера
+  selector:
+    matchLabels:
+      app: cookie-factory
+  template:
+    metadata:
+      labels:
+        app: cookie-factory
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html
+        configMap:
+          name: cookie-factory-page
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cookie-factory-page
+data:
+  index.html: |
+    <h1>🍪 Cookie Factory на Kubernetes!</h1>
+    <p>Работает в 3 репликах 🚢</p>
