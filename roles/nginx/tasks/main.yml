@@ -1,0 +1,58 @@
+---
+- name: Create nginx directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/nginx
+    - /opt/nginx/ssl
+    - /opt/nginx/auth
+
+- name: Generate self-signed SSL certificate
+  ansible.builtin.command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout {{ ssl_certificate_key }}
+    -out {{ ssl_certificate }}
+    -subj "/C=RU/ST=Moscow/L=Moscow/O=SCADA/CN={{ nginx_domain }}"
+  args:
+    creates: "{{ ssl_certificate }}"
+
+- name: Install apache2-utils for htpasswd
+  ansible.builtin.apt:
+    name: apache2-utils
+    state: present
+  when: basic_auth_enabled
+
+- name: Create htpasswd file
+  ansible.builtin.command: >
+    htpasswd -bc /opt/nginx/auth/.htpasswd 
+    {{ basic_auth_user }} {{ basic_auth_password }}
+  args:
+    creates: /opt/nginx/auth/.htpasswd
+  when: basic_auth_enabled
+
+- name: Copy nginx.conf
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /opt/nginx/nginx.conf
+    mode: '0644'
+  notify: restart nginx
+
+- name: Copy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/nginx/docker-compose.yml
+    mode: '0644'
+  notify: restart nginx
+
+- name: Ensure nginx container is running
+  community.docker.docker_compose_v2:
+    project_src: /opt/nginx
+    state: present
+    pull: missing
+  register: nginx_result
+
+- name: Display nginx result
+  ansible.builtin.debug:
+    var: nginx_result

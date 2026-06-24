@@ -1,0 +1,18 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: scada-nginx
+    ports:
+      - "{{ nginx_port }}:80"
+      - "{{ nginx_ssl_port }}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./auth:/etc/nginx/auth:ro
+    networks:
+      - {{ nginx_network }}
+    restart: unless-stopped
+
+networks:
+  {{ nginx_network }}:
+    external: true

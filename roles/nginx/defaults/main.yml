@@ -1,0 +1,26 @@
+---
+# Nginx settings (порты изменены, чтобы не конфликтовать)
+nginx_port: 8880
+nginx_ssl_port: 8443
+nginx_domain: "scada.local"
+
+# SSL settings
+ssl_certificate_path: "/opt/nginx/ssl"
+ssl_certificate: "{{ ssl_certificate_path }}/server.crt"
+ssl_certificate_key: "{{ ssl_certificate_path }}/server.key"
+
+# Basic auth
+basic_auth_enabled: true
+basic_auth_user: "admin"
+basic_auth_password: "ScadaAdmin2026!"
+
+# Backend services
+grafana_backend: "http://scada-grafana:3000"
+prometheus_backend: "http://scada-prometheus:9090"
+alertmanager_backend: "http://scada-alertmanager:9093"
+nodered_backend: "http://scada-nodered:1880"
+influxdb_backend: "http://scada-influxdb:8086"
+cadvisor_backend: "http://scada-cadvisor:8080"
+
+# Docker network
+nginx_network: "scada_scada"

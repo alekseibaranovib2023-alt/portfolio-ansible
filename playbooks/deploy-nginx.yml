@@ -1,0 +1,28 @@
+---
+- name: Deploy Nginx reverse proxy
+  hosts: localhost
+  connection: local
+  become: true
+  
+  roles:
+    - role: nginx
+  
+  post_tasks:
+    - name: Display access information
+      ansible.builtin.debug:
+        msg:
+          - "Nginx reverse proxy deployed successfully!"
+          - ""
+          - "Access URLs (with Basic Auth):"
+          - "  Grafana:      https://{{ nginx_domain }}/grafana"
+          - "  Prometheus:   https://{{ nginx_domain }}/prometheus"
+          - "  Alertmanager: https://{{ nginx_domain }}/alertmanager"
+          - "  Node-RED:     https://{{ nginx_domain }}/nodered"
+          - "  InfluxDB:     https://{{ nginx_domain }}/influxdb"
+          - "  cAdvisor:     https://{{ nginx_domain }}/cadvisor"
+          - ""
+          - "Credentials:"
+          - "  User: {{ basic_auth_user }}"
+          - "  Password: {{ basic_auth_password }}"
+          - ""
+          - "Note: Add '{{ nginx_domain }}' to /etc/hosts pointing to 127.0.0.1"
