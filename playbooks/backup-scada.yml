@@ -1,0 +1,24 @@
+---
+- name: Setup SCADA backup system
+  hosts: localhost
+  connection: local
+  become: true
+  
+  vars_files:
+    - ../secrets.yml
+  
+  roles:
+    - role: backup
+  
+  post_tasks:
+    - name: Display backup information
+      ansible.builtin.debug:
+        msg:
+          - "Backup system configured successfully!"
+          - "Backup directory: {{ backup_base_dir }}"
+          - "Retention: {{ backup_retention_days }} days"
+          - "Schedule: daily at {{ backup_schedule_hour }}:{{ '%02d' | format(backup_schedule_minute) }}"
+          - "Log file: /var/log/scada-backup.log"
+          - ""
+          - "Manual backup: /usr/local/bin/backup-all.sh"
+          - "Manual rotation: /usr/local/bin/backup-rotate.sh"

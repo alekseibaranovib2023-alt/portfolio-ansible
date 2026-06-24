@@ -1,0 +1,61 @@
+---
+- name: Create backup directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  loop:
+    - "{{ backup_base_dir }}"
+    - "{{ backup_influxdb_dir }}"
+    - "{{ backup_grafana_dir }}"
+    - "{{ backup_nodered_dir }}"
+    - "{{ backup_configs_dir }}"
+
+- name: Copy backup scripts
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: '0755'
+  loop:
+    - backup-influxdb.sh
+    - backup-grafana.sh
+    - backup-nodered.sh
+    - backup-configs.sh
+    - backup-rotate.sh
+    - backup-all.sh
+
+- name: Create log file
+  ansible.builtin.file:
+    path: /var/log/scada-backup.log
+    state: touch
+    mode: '0644'
+
+- name: Setup daily backup cron job
+  ansible.builtin.cron:
+    name: "SCADA daily backup"
+    hour: "{{ backup_schedule_hour }}"
+    minute: "{{ backup_schedule_minute }}"
+    job: "/usr/local/bin/backup-all.sh >> /var/log/scada-backup.log 2>&1"
+    user: root
+    state: present
+
+- name: Setup daily rotation cron job
+  ansible.builtin.cron:
+    name: "SCADA backup rotation"
+    hour: "3"
+    minute: "0"
+    job: "/usr/local/bin/backup-rotate.sh >> /var/log/scada-backup.log 2>&1"
+    user: root
+    state: present
+
+- name: Run initial backup
+  ansible.builtin.command: /usr/local/bin/backup-all.sh
+  register: initial_backup
+  changed_when: initial_backup.rc == 0
+  failed_when: false
+
+- name: Display initial backup result
+  ansible.builtin.debug:
+    var: initial_backup.stdout_lines

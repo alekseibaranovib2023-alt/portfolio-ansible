@@ -1,0 +1,44 @@
+#!/bin/bash
+# Backup Node-RED flows via API
+set -e
+
+BACKUP_DIR="{{ backup_nodered_dir }}"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_PATH="${BACKUP_DIR}/nodered_${DATE}"
+NODERED_URL="{{ nodered_api_url }}"
+
+mkdir -p "${BACKUP_PATH}"
+
+echo "[$(date)] Starting Node-RED backup..."
+
+# Backup flows via API
+echo "[$(date)] Backing up flows..."
+curl -s "${NODERED_URL}/flows" | \
+  jq '.' > "${BACKUP_PATH}/flows.json"
+
+# Backup Node-RED data volume
+echo "[$(date)] Backing up data volume..."
+NODERED_VOLUME=$(docker inspect scada-nodered \
+  --format='{% raw %}{{range .Mounts}}{{if eq .Destination "/data"}}{{.Name}}{{end}}{{end}}{% endraw %}')
+
+if [ -n "$NODERED_VOLUME" ]; then
+  echo "  - Volume: $NODERED_VOLUME"
+  docker run --rm \
+    -v "${NODERED_VOLUME}":/data:ro \
+    -v "${BACKUP_PATH}":/backup \
+    alpine tar -czf /backup/nodered-data.tar.gz -C /data .
+  echo "  - Data backed up"
+else
+  echo "  - No data volume found, skipping"
+fi
+
+# Compress backup
+{% if backup_compression %}
+cd "${BACKUP_DIR}"
+tar -czf "nodered_${DATE}.tar.gz" "nodered_${DATE}"
+rm -rf "nodered_${DATE}"
+echo "[$(date)] Backup compressed: nodered_${DATE}.tar.gz"
+{% endif %}
+
+echo "[$(date)] Node-RED backup completed"
+ls -lh "${BACKUP_DIR}" | tail -5

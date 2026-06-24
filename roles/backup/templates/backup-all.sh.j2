@@ -1,0 +1,46 @@
+#!/bin/bash
+# Run all SCADA backups
+set -e
+
+echo "========================================"
+echo "[$(date)] Starting SCADA backup process"
+echo "========================================"
+
+# Check if all containers are running
+echo ""
+echo "Checking SCADA containers..."
+for container in scada-grafana scada-influxdb scada-nodered scada-mosquitto scada-prometheus; do
+  if ! docker ps --format '{% raw %}{{.Names}}{% endraw %}' | grep -q "^${container}$"; then
+    echo "ERROR: Container $container is not running!"
+    exit 1
+  fi
+  echo "  ✓ $container is running"
+done
+
+echo ""
+echo "========================================"
+
+# Run all backup scripts
+echo ""
+echo "[1/4] Backing up InfluxDB..."
+/usr/local/bin/backup-influxdb.sh
+
+echo ""
+echo "[2/4] Backing up Grafana..."
+/usr/local/bin/backup-grafana.sh
+
+echo ""
+echo "[3/4] Backing up Node-RED..."
+/usr/local/bin/backup-nodered.sh
+
+echo ""
+echo "[4/4] Backing up configs..."
+/usr/local/bin/backup-configs.sh
+
+echo ""
+echo "========================================"
+echo "[$(date)] All backups completed successfully!"
+echo "========================================"
+echo ""
+echo "Backup summary:"
+du -sh {{ backup_base_dir }}/* 2>/dev/null || echo "No backups yet"

@@ -1,0 +1,45 @@
+#!/bin/bash
+# Backup Grafana dashboards and datasources via API
+set -e
+
+BACKUP_DIR="{{ backup_grafana_dir }}"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_PATH="${BACKUP_DIR}/grafana_${DATE}"
+GRAFANA_URL="{{ grafana_api_url }}"
+GRAFANA_USER="{{ grafana_admin_user }}"
+GRAFANA_PASS="{{ grafana_admin_password }}"
+
+mkdir -p "${BACKUP_PATH}/dashboards"
+mkdir -p "${BACKUP_PATH}/datasources"
+
+echo "[$(date)] Starting Grafana backup..."
+
+# Backup datasources
+echo "[$(date)] Backing up datasources..."
+curl -s -u "${GRAFANA_USER}:${GRAFANA_PASS}" \
+  "${GRAFANA_URL}/api/datasources" | \
+  jq '.' > "${BACKUP_PATH}/datasources/all_datasources.json"
+
+# Backup all dashboards
+echo "[$(date)] Backing up dashboards..."
+DASHBOARD_UIDS=$(curl -s -u "${GRAFANA_USER}:${GRAFANA_PASS}" \
+  "${GRAFANA_URL}/api/search?limit=1000" | \
+  jq -r '.[] | select(.type=="dash-db") | .uid')
+
+for uid in $DASHBOARD_UIDS; do
+  echo "  - Backing up dashboard: $uid"
+  curl -s -u "${GRAFANA_USER}:${GRAFANA_PASS}" \
+    "${GRAFANA_URL}/api/dashboards/uid/${uid}" | \
+    jq '.' > "${BACKUP_PATH}/dashboards/${uid}.json"
+done
+
+# Compress backup
+{% if backup_compression %}
+cd "${BACKUP_DIR}"
+tar -czf "grafana_${DATE}.tar.gz" "grafana_${DATE}"
+rm -rf "grafana_${DATE}"
+echo "[$(date)] Backup compressed: grafana_${DATE}.tar.gz"
+{% endif %}
+
+echo "[$(date)] Grafana backup completed"
+ls -lh "${BACKUP_DIR}" | tail -5

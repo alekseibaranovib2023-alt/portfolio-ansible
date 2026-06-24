@@ -1,0 +1,23 @@
+#!/bin/bash
+# Rotate old backups (keep last {{ backup_retention_days }} days)
+set -e
+
+BACKUP_DIR="{{ backup_base_dir }}"
+RETENTION_DAYS="{{ backup_retention_days }}"
+
+echo "[$(date)] Starting backup rotation (keeping ${RETENTION_DAYS} days)..."
+
+# Find and delete old backups
+for subdir in influxdb grafana nodered configs; do
+  if [ -d "${BACKUP_DIR}/${subdir}" ]; then
+    echo "  Rotating: ${subdir}"
+    find "${BACKUP_DIR}/${subdir}" -type f -mtime +${RETENTION_DAYS} -delete
+  fi
+done
+
+# Show disk usage
+echo ""
+echo "[$(date)] Current backup disk usage:"
+du -sh "${BACKUP_DIR}"/*
+echo ""
+echo "[$(date)] Rotation completed"

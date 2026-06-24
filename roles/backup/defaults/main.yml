@@ -1,0 +1,28 @@
+---
+# Backup settings
+backup_base_dir: /opt/backups
+backup_retention_days: 7
+backup_compression: true
+
+# Directories
+backup_influxdb_dir: "{{ backup_base_dir }}/influxdb"
+backup_grafana_dir: "{{ backup_base_dir }}/grafana"
+backup_nodered_dir: "{{ backup_base_dir }}/nodered"
+backup_configs_dir: "{{ backup_base_dir }}/configs"
+
+# InfluxDB backup settings
+influxdb_backup_bucket: "_all"
+influxdb_backup_timeout: 600
+
+# Grafana API settings
+grafana_api_url: "http://localhost:{{ grafana_port | default(3000) }}"
+
+# Node-RED API settings
+nodered_api_url: "http://localhost:{{ nodered_port | default(1880) }}"
+
+# Backup schedule (cron format)
+backup_schedule_hour: 2
+backup_schedule_minute: 0
+
+# SCADA base directory
+scada_base_dir: /opt/scada

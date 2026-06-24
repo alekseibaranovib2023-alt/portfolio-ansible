@@ -1,0 +1,37 @@
+#!/bin/bash
+# Backup InfluxDB data
+set -e
+
+BACKUP_DIR="{{ backup_influxdb_dir }}"
+DATE=$(date +%Y%m%d_%H%M%S)
+TEMP_BACKUP="/tmp/influxdb_backup_${DATE}"
+FINAL_PATH="${BACKUP_DIR}/influxdb_${DATE}.tar.gz"
+
+echo "[$(date)] Starting InfluxDB backup..."
+
+# Step 1: Create backup INSIDE container (in /tmp)
+echo "[$(date)] Creating backup inside container..."
+docker exec scada-influxdb rm -rf "${TEMP_BACKUP}" 2>/dev/null || true
+docker exec scada-influxdb influx backup "${TEMP_BACKUP}" \
+  --token "{{ influxdb_token }}"
+
+# Step 2: Copy backup from container to host
+echo "[$(date)] Copying backup from container..."
+docker cp "scada-influxdb:${TEMP_BACKUP}" "${BACKUP_DIR}/influxdb_${DATE}"
+
+# Step 3: Cleanup temp backup inside container
+docker exec scada-influxdb rm -rf "${TEMP_BACKUP}"
+
+# Step 4: Compress on host
+{% if backup_compression %}
+cd "${BACKUP_DIR}"
+tar -czf "influxdb_${DATE}.tar.gz" "influxdb_${DATE}"
+rm -rf "influxdb_${DATE}"
+echo "[$(date)] Backup compressed: influxdb_${DATE}.tar.gz"
+{% else %}
+echo "[$(date)] Backup created: influxdb_${DATE}"
+{% endif %}
+
+# Step 5: Show result
+echo "[$(date)] InfluxDB backup completed"
+ls -lh "${BACKUP_DIR}" | tail -5
