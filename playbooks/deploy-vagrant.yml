@@ -1,0 +1,53 @@
+---
+- name: Deploy SCADA to Vagrant VMs
+  hosts: master
+  become: true
+  
+  vars_files:
+    - ../secrets.yml
+  
+  roles:
+    - role: scada
+    - role: backup
+    - role: nginx
+  
+  post_tasks:
+    - name: Display access information
+      ansible.builtin.debug:
+        msg:
+          - "SCADA deployed to Vagrant successfully!"
+          - ""
+          - "Access URLs:"
+          - "  Grafana:      https://{{ nginx_domain }}/grafana"
+          - "  Prometheus:   https://prometheus.{{ nginx_domain }}"
+          - "  Node-RED:     https://nodered.{{ nginx_domain }}"
+          - ""
+          - "VM IPs:"
+          - "  Master:  192.168.56.10"
+          - "  Worker1: 192.168.56.11"
+          - "  Worker2: 192.168.56.12"
+
+- name: Configure workers
+  hosts: workers
+  become: true
+  
+  tasks:
+    - name: Install Docker on workers
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+        update_cache: yes
+    
+    - name: Ensure Docker is running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: Add vagrant user to docker group
+      ansible.builtin.user:
+        name: vagrant
+        groups: docker
+        append: yes

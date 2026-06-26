@@ -1,0 +1,20 @@
+---
+# Vagrant-specific variables
+environment_name: vagrant
+debug_mode: true
+
+# Docker settings
+docker_users:
+  - vagrant
+
+# SCADA settings
+scada_base_dir: /opt/scada
+
+# Network settings
+nginx_domain: "scada.local"
+nginx_port: 80
+nginx_ssl_port: 443
+
+# Backup settings
+backup_base_dir: /opt/backups
+backup_retention_days: 7

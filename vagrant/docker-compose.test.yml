@@ -1,0 +1,43 @@
+services:
+  scada-master:
+    build: 
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: test-master
+    hostname: scada-master
+    ports:
+      - "2222:22"
+    networks:
+      test_net:
+        ipv4_address: 172.30.0.10
+
+  scada-worker-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: test-worker-1
+    hostname: scada-worker-1
+    ports:
+      - "2223:22"
+    networks:
+      test_net:
+        ipv4_address: 172.30.0.11
+
+  scada-worker-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: test-worker-2
+    hostname: scada-worker-2
+    ports:
+      - "2224:22"
+    networks:
+      test_net:
+        ipv4_address: 172.30.0.12
+
+networks:
+  test_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
