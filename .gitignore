@@ -1,53 +1,29 @@
 # Ansible
 *.retry
-ansible.log
-.vault_password
-vault_pass.txt
 .ansible/
+
+# Vault
+.vault_password
+secrets.yml.dec
 
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
 venv/
-env/
-ENV/
+*.egg-info/
 
 # IDE
 .vscode/
 .idea/
 *.swp
-*.swo
 *~
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Terraform
-.terraform/
-*.tfstate
-*.tfstate.*
-.terraform.lock.hcl
-
 # Docker
+docker-compose.override.yml
+
+# Logs
 *.log
 
-# Secrets
-secrets.yml
-*.vault.yml
-
-# Molecule
-.molecule/
-
-# Local testing
-.vagrant/
-*.box
-
-# Installed roles (устанавливаются через ansible-galaxy)
-roles/geerlingguy.*/
-
-# Collections
-collections/
+# OS
+Thumbs.db
+.DS_Store
